@@ -8,6 +8,10 @@ class TestNavigationNode(Node):
     def __init__(self):
         super().__init__('test_navigation')
 
+        self.declare_parameters(namespace='', parameters=[
+            ('planner', 'STRAIGHT_LINE')
+        ])
+
         self.odom_sub = self.create_subscription(Odometry, '/localization/odometry', 
             self.odom_callback, 10)
         

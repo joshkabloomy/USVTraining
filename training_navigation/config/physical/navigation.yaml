@@ -1,0 +1,4 @@
+
+/**:
+  ros__parameters:
+    planner: 'STRAIGHT_LINE' # change to 'CUSTOM' to use your implementation

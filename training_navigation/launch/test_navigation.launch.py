@@ -9,11 +9,15 @@ import os
 
 def generate_launch_description():
 
+    pkg_share = get_package_share_directory('training_navigation')
+
     localization = get_package_share_directory('training_localization')
     perception = get_package_share_directory('training_perception')
 
     usv_arg = DeclareLaunchArgument('usv', default_value='simulation')
     usv_config = LaunchConfiguration('usv', default='simulation')
+
+    navigation_params_file = (pkg_share, '/config/', usv_config, '/navigation.yaml')
 
     return LaunchDescription([
         usv_arg, 
@@ -30,6 +34,7 @@ def generate_launch_description():
 
         Node(
             package='training_navigation',
-            executable='test_navigation'
+            executable='test_navigation',
+            parameters=[navigation_params_file]
         )
     ])
