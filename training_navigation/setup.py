@@ -30,6 +30,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'test_navigation = training_navigation.test_navigation_node:main'
         ],
     },
 )

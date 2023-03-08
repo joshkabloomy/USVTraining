@@ -26,5 +26,10 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(perception, 'launch', 'main.launch.py')),
             launch_arguments={'usv': usv_config}.items()
+        ),
+
+        Node(
+            package='training_navigation',
+            executable='test_navigation'
         )
     ])
