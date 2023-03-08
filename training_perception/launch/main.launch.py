@@ -8,8 +8,8 @@ def generate_launch_description():
 
     pkg_share = get_package_share_directory('training_perception')
 
-    usv_arg = DeclareLaunchArgument('usv')
-    usv_config = LaunchConfiguration('usv')
+    usv_arg = DeclareLaunchArgument('usv', default_value='simulation')
+    usv_config = LaunchConfiguration('usv', default='simulation')
 
     euclidean_clustering_params_file = (pkg_share, '/config/', usv_config, 
         '/euclidean_clustering.yaml')
