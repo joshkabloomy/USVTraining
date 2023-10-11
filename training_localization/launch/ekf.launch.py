@@ -45,5 +45,11 @@ def generate_launch_description():
             parameters=[            
                 robot_localization_file_path
             ]
+        ),
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='odom_to_map',
+            arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom']
         )
     ])

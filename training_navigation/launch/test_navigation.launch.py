@@ -23,18 +23,26 @@ def generate_launch_description():
         usv_arg, 
 
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(localization, 'launch', 'ekf.launch.py')),
-            launch_arguments={'usv': usv_config}.items()
+            PythonLaunchDescriptionSource(
+                os.path.join(localization, 'launch', 'ekf.launch.py')),
+                launch_arguments={'usv': usv_config}.items()
         ),
 
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(perception, 'launch', 'main.launch.py')),
-            launch_arguments={'usv': usv_config}.items()
+            PythonLaunchDescriptionSource(
+                os.path.join(perception, 'launch', 'main.launch.py')),
+                launch_arguments={'usv': usv_config}.items()
         ),
 
         Node(
             package='training_navigation',
             executable='test_navigation',
             parameters=[navigation_params_file]
+        ),
+
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(pkg_share, 'launch', 'rviz.launch.py')
+            )
         )
     ])

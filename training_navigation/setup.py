@@ -20,6 +20,9 @@ setup(
 
         (os.path.join('share', package_name, 'config/physical'),
             glob(os.path.join('config', 'physical', '*.yaml'))),
+
+        (os.path.join('share', package_name, 'rviz'),
+            glob(os.path.join('rviz', '*.rviz'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

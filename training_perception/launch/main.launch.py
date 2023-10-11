@@ -11,21 +11,6 @@ def generate_launch_description():
     usv_arg = DeclareLaunchArgument('usv', default_value='simulation')
     usv_config = LaunchConfiguration('usv', default='simulation')
 
-    euclidean_clustering_params_file = (pkg_share, '/config/', usv_config, 
-        '/euclidean_clustering.yaml')
-
     return LaunchDescription([
         usv_arg,
-
-        DeclareLaunchArgument(
-            'euclidean_clustering_params_file',
-            default_value=euclidean_clustering_params_file
-        ),
-
-        Node(
-            package='euclidean_cluster_nodes',
-            executable='euclidean_cluster_node_exe',
-            parameters=[LaunchConfiguration('euclidean_clustering_params_file')],
-            remappings=[('/points_in', '/wamv/sensors/lidars/lidar_wamv/points')]
-        )
     ])
