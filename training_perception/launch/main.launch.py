@@ -15,6 +15,7 @@ def generate_launch_description():
     usv_config = LaunchConfiguration('usv', default='simulation')
 
     lidar_filter_param_file = (pkg_share, '/config/', usv_config, '/lidar_filter.yaml')
+    clustering_param_file = (pkg_share, '/config/', usv_config, '/euclidean_clustering.yaml')
 
     return LaunchDescription([
         usv_arg,
@@ -24,5 +25,11 @@ def generate_launch_description():
             executable='lidar_filter',
             parameters=[lidar_filter_param_file],
             remappings=[('input', 'wamv/sensors/lidars/lidar_wamv_sensor/points')]
+        ),
+
+        Node(
+            package='training_perception',
+            executable='euclidean_clustering',
+            parameters=[clustering_param_file]
         )
     ])
