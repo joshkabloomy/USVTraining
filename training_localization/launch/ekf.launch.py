@@ -12,12 +12,14 @@ def generate_launch_description():
     usv_config = LaunchConfiguration('usv', default='simulation')
 
     robot_localization_file_path = (pkg_share, '/config/', usv_config, '/ekf.yaml')
+    sensor_config_file_path = (pkg_share, '/config/', usv_config, '/sensor_config.yaml')
 
     return LaunchDescription([
         usv_arg,
         Node(
             package='training_localization',
-            executable='republisher'
+            executable='republisher',
+            parameters=[sensor_config_file_path]
         ),
         Node(
             package='robot_localization',
@@ -33,7 +35,7 @@ def generate_launch_description():
             package='robot_localization',
             executable='navsat_transform_node',
             name='navsat_transform_node',
-            respawn='true',
+            respawn=True,
             remappings=[
             ('/imu', '/navsat/imu'),
             ('/gps/fix', '/navsat/gps'),
@@ -41,14 +43,7 @@ def generate_launch_description():
             ("/odometry/gps", "/odometry/gps2")
             ],
             parameters=[            
-                {"publish_filtered_gps": True},
-                {"wait_for_datum": False},
-                {"zero_altitude": False},
-                {"yaw_offset": 0.0},
-                {"use_odometry_yaw": True},
-                {"delay": 0.0},
-                {"frequency": 30.0},
-                {"broadcast_utm_transform": True},
+                robot_localization_file_path
             ]
         )
     ])
