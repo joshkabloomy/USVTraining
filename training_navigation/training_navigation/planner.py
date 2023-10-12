@@ -2,6 +2,14 @@ from geometry_msgs.msg import Pose, PoseStamped
 from nav_msgs.msg import Path
 import math
 
+###
+
+# For trainees:
+# Implement the CustomPlanner class at the bottom of the file
+# Feel free to change other files as well, though you shouldn't need to make a lot of changes
+
+###
+
 class Planner:
 
     def __init__(self):
