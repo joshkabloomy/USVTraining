@@ -42,7 +42,7 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-# ament_python_install_package(${PROJECT_NAME})
+ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
   # for python files

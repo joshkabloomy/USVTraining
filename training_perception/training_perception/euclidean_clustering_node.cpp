@@ -48,11 +48,10 @@ class EuclideanClusteringNode : public rclcpp::Node {
         );
         vg.filter(*cloud_filtered);
 
-        RCLCPP_INFO(this->get_logger(), std::to_string(temp_cloud->size()).c_str());
-        if (cloud_filtered->size() == temp_cloud->size()) {
-            RCLCPP_INFO(this->get_logger(), "Voxel filter failed... returning");
-            return;
-        }
+        // if (cloud_filtered->size() == temp_cloud->size()) {
+        //     RCLCPP_INFO(this->get_logger(), "Voxel filter failed... returning");
+        //     return;
+        // }
 
         pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
         tree->setInputCloud(cloud_filtered);
