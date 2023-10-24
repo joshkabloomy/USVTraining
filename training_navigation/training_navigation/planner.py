@@ -1,6 +1,7 @@
 from geometry_msgs.msg import Pose, PoseStamped
 from nav_msgs.msg import Path
 import math
+import heapq
 
 ###
 
@@ -15,6 +16,7 @@ class Planner:
     def __init__(self):
         self.robot_pose:Pose = None
         self.goal_pose:Pose = None
+        self.bounding_boxes = None
 
     # Helper method to create a deep copy of a Pose
     def pose_deep_copy(pose:Pose):
@@ -77,4 +79,18 @@ class StraightPlanner(Planner):
 class CustomPlanner(Planner):
 
     def create_plan(self):
-        pass
+        queue = []
+        visited = set()
+        start = Planner.pose_deep_copy(self.robot_pose)
+        start.position.x = 0
+        start.position.y = 0
+        
+        heapq.heappush(queue, Pose)
+        
+        while true:
+            current = heapq.heappop(queue)
+            
+            if current.position.x == self.goal_pose.position.x and current.position.y == self.goal_pose.position.y:
+                
+            
+            
