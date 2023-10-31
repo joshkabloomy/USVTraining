@@ -76,9 +76,36 @@ class StraightPlanner(Planner):
 
 
 # For you to implement!
-class CustomPlanner(Planner):
-
+class AStarCustomPlanner(Planner):
+    def __init__(self):
+        self.x_width, self.y__width = 100, 100
+    
+    class Node:
+        def __init__(self, x, y, cost, parent_node):
+            self.x = x
+            self.y = y
+            self.cost = cost
+            self.parent_node = parent_node
+    
+    def set_obstacle_map(self):
+        obstacle_map = []
+        # instantiate the matrix
+        for i in range(0, self.x_width):
+            obstacle_map[i] = [[False for j in range(0, self.y__width)]]
+        self.obstacle_map = obstacle_map
+        # put true for the box obstacle
+        for i in range(self.bounding_boxes.corners)
+        pass
+    
+    def calc_grid_position(self,node):
+        return (node.x + self.x_width/2, node.y + self.y_width/2)
+        
     def create_plan(self):
+        if self.robot_pose is None or self.goal_pose is None:
+            return Path()
+        path = Path()
+        path.header.frame_id = 'map'
+        
         queue = []
         visited = set()
         start = Planner.pose_deep_copy(self.robot_pose)
