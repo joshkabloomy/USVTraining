@@ -86,6 +86,9 @@ class AStarCustomPlanner(Planner):
             self.y = y
             self.cost = cost
             self.parent_node = parent_node
+        # comparator function
+        def __lt__(self, other):
+            return self.val < other.val
     
     def set_obstacle_map(self):
         obstacle_map = []
@@ -97,8 +100,13 @@ class AStarCustomPlanner(Planner):
         for i in range(self.bounding_boxes.corners)
         pass
     
-    def calc_grid_position(self,node):
+    
+    # transform from frame to coordinate plane
+    def calc_grid_position(self, node):
         return (node.x + self.x_width/2, node.y + self.y_width/2)
+    # check bounds 
+    def verify_node(self, node):
+        px, py = self.calc_grid_position(node)
         
     def create_plan(self):
         if self.robot_pose is None or self.goal_pose is None:
@@ -106,13 +114,13 @@ class AStarCustomPlanner(Planner):
         path = Path()
         path.header.frame_id = 'map'
         
-        queue = []
         visited = set()
+        path_set = dict()
         start = Planner.pose_deep_copy(self.robot_pose)
         start.position.x = 0
         start.position.y = 0
-        
-        heapq.heappush(queue, Pose)
+        queue = []
+        heapq.heappush(queue, start)
         
         while true:
             current = heapq.heappop(queue)
