@@ -78,7 +78,9 @@ class StraightPlanner(Planner):
 # For you to implement!
 class AStarCustomPlanner(Planner):
     def __init__(self):
+        super().__init()
         self.x_width, self.y__width = 100, 100
+        self.obstacle_map = None
     
     class Node:
         def __init__(self, x, y, cost, parent_node):
@@ -91,41 +93,80 @@ class AStarCustomPlanner(Planner):
             return self.val < other.val
     
     def set_obstacle_map(self):
+        pass
         obstacle_map = []
         # instantiate the matrix
         for i in range(0, self.x_width):
             obstacle_map[i] = [[False for j in range(0, self.y__width)]]
-        self.obstacle_map = obstacle_map
+        
+        
         # put true for the box obstacle
-        for i in range(self.bounding_boxes.corners)
-        pass
+        
+        small_y, large_y, small_x, large_x = None, None, None, None
+        
+        for a in self.bounding_boxes.corners: # find the orientation of obstacle
+            small_y = min(a.y, small_y) if small_y is not None else a.y
+            small_x = min(a.x, small_x) if small_x is not None else a.x
+            large_y = min(a.y, large_y) if large_y is not None else a.y
+            large_x = min(a.x, large_x) if large_y is not None else a.x
+        
+        if small_y == large_y:
+            for i in range(small_x, large_x + 1):
+                obstacle_map[i][small_y] = True
+                obstacle_map[i+1][small_y] = True # depth of the bounding box
+        else:
+            for i in range(small_y, large_y + 1):
+                obstacle_map[small_x][i] = True
+                obstacle_map[small_x][i+1] = True
+                
+        self.obstacle_map = obstacle_map
     
     
     # transform from frame to coordinate plane
     def calc_grid_position(self, node):
         return (node.x + self.x_width/2, node.y + self.y_width/2)
+    
     # check bounds 
     def verify_node(self, node):
         px, py = self.calc_grid_position(node)
-        
+    
+    @staticmethod
+    def calc_heuristic(node1, node2):
+        w = 1.0
+        return w * math.hypot(node1.x - node2.x, node1.y - node2.y)
+    
+    
+    # A* algorithm
     def create_plan(self):
         if self.robot_pose is None or self.goal_pose is None:
             return Path()
         path = Path()
         path.header.frame_id = 'map'
         
+        start_node = self.Node(self.robot_pose.position.x, self.robot_pose.position.y, 0.0, -1)
+        goal_node = self.Node(self.goal_pose.position.x, self.goal_pose.position.y, 0.0, -1)
+        
         visited = set()
         path_set = dict()
-        start = Planner.pose_deep_copy(self.robot_pose)
-        start.position.x = 0
-        start.position.y = 0
+        #start = Planner.pose_deep_copy(self.robot_pose)
+       
         queue = []
-        heapq.heappush(queue, start)
+        heapq.heappush(queue, start_node)
         
-        while true:
+        while True:
+            if len(queue) == 0:
+                print("Queue is empty")
+                break
+            # pops out of heap
             current = heapq.heappop(queue)
             
             if current.position.x == self.goal_pose.position.x and current.position.y == self.goal_pose.position.y:
                 
+                pass
+            
+            node_left = self.Node(current.x - 1, current.y, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
+            node_right = self.Node(current.x + 1, current.y, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
+            node_forward = self.Node(current.x, current.y + 1, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
+            node_back = self.Node(current.x, current.y - 1, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
             
             
