@@ -76,10 +76,10 @@ class StraightPlanner(Planner):
 
 
 # For you to implement!
-class AStarCustomPlanner(Planner):
+class CustomPlanner(Planner):
     def __init__(self):
         super().__init()
-        self.x_width, self.y__width = 100, 100
+        self.x_width, self.y_width = 100, 100
         self.obstacle_map = None
     
     class Node:
@@ -91,6 +91,9 @@ class AStarCustomPlanner(Planner):
         # comparator function
         def __lt__(self, other):
             return self.val < other.val
+        # equals function
+        def __eq__(self, other):
+            return self.x == other.x and self.y == other.y
     
     def set_obstacle_map(self):
         pass
@@ -124,11 +127,31 @@ class AStarCustomPlanner(Planner):
     
     # transform from frame to coordinate plane
     def calc_grid_position(self, node):
-        return (node.x + self.x_width/2, node.y + self.y_width/2)
+        return (round(node.x + self.x_width/2), round(node.y + self.y_width/2))
+    # calc a specific x/y coordiante
+    def calc_xy_index(self, position, size):
+        return round(position + size/2)
+    #specific string to access a certain node in (x,y) coord
+    def calc_grid_string(self, node):
+        return str(node.x) + " " + str(node.y)
     
     # check bounds 
     def verify_node(self, node):
         px, py = self.calc_grid_position(node)
+        if px < -1 * self.x_width/2:
+            return False
+        elif py < -1 * self.y_width/2:
+            return False
+        elif px >= self.x_width/2:
+            return False
+        elif py >= self.y__width/2:
+            return False
+        
+        # check if hits obstacle
+        if self.obstacle_map[node.x][node.y]:
+            return False
+        
+        return True
     
     @staticmethod
     def calc_heuristic(node1, node2):
@@ -143,13 +166,21 @@ class AStarCustomPlanner(Planner):
         path = Path()
         path.header.frame_id = 'map'
         
-        start_node = self.Node(self.robot_pose.position.x, self.robot_pose.position.y, 0.0, -1)
-        goal_node = self.Node(self.goal_pose.position.x, self.goal_pose.position.y, 0.0, -1)
+        start_x_val = self.calc_xy_index(self.robot_pose.position.x, self.x_width)
+        start_y_val = self.calc_xy_index(self.robot_pose.position.y, self.y_width)
+        start_node = self.Node(start_x_val, 
+                               start_y_val, 0.0, -1)
+        goal_node = self.Node(self.calc_xy_index(self.goal_pose.position.x, self.x_width), 
+                               self.calc_xy_index(self.goal_pose.position.y, self.y_width), 0.0, -1)
         
-        visited = set()
-        path_set = dict()
+        
         #start = Planner.pose_deep_copy(self.robot_pose)
-       
+        path_value = dict()
+        path_value[self.calc_grid_string(start_node)] = 0
+        
+        visited = set() # we do not to revisit a node twice 
+        
+    
         queue = []
         heapq.heappush(queue, start_node)
         
@@ -159,14 +190,41 @@ class AStarCustomPlanner(Planner):
                 break
             # pops out of heap
             current = heapq.heappop(queue)
+            print(self.calc_grid_string(current))
+            visited.add(str(start_x_val) + " " + str(start_y_val))
             
             if current.position.x == self.goal_pose.position.x and current.position.y == self.goal_pose.position.y:
-                
-                pass
+                break
             
             node_left = self.Node(current.x - 1, current.y, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
             node_right = self.Node(current.x + 1, current.y, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
             node_forward = self.Node(current.x, current.y + 1, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
             node_back = self.Node(current.x, current.y - 1, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
             
+            
+            if not self.verify_node(node_left) or node_left in visited:
+                node_left = None
+            if not self.verify_node(node_right) or node_right in visited:
+                node_right = None
+            if not self.verify_node(node_forward) or node_forward in visited:
+                node_forward = None
+            if not self.verify_node(node_back) or node_back in visited:
+                node_back = None
+                
+            if self.calc_grid_position(node_left) in path_value:
+                continue
+            
+            if node_left not in queue:
+                heapq.heappush(queue, node_left)
+            else :
+                for i in range(len(queue)):
+                        if node_left.x == queue[i].x and node_left.y == queue[i].y:
+                            if queue[i].cost > node_left.cost:
+                                queue[i] = node_left
+                                heapq.heapify(queue)
+            
+                    
+                    
+                    
+                    
             
