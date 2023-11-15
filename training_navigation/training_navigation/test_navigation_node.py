@@ -40,6 +40,7 @@ class TestNavigationNode(Node):
             self.planner = StraightPlanner()
         else:
             self.planner = CustomPlanner()
+            self.planner.node = self
 
     def odom_callback(self, msg:Odometry):
         self.robot_pose = msg.pose.pose
@@ -62,7 +63,7 @@ class TestNavigationNode(Node):
         if self.goal is None:
             self.get_logger().info('No Goal Pose: Cannot Create Path')
             return
-        
+        self.get_logger().info('Check1')
         self.planner.robot_pose = self.robot_pose
         self.planner.goal_pose = self.goal
 

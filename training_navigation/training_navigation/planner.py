@@ -78,7 +78,6 @@ class StraightPlanner(Planner):
 # For you to implement!
 class CustomPlanner(Planner):
     def __init__(self):
-        super().__init()
         self.x_width, self.y_width = 100, 100
         self.obstacle_map = None
     
@@ -90,42 +89,49 @@ class CustomPlanner(Planner):
             self.parent_node = parent_node
         # comparator function
         def __lt__(self, other):
-            return self.val < other.val
+            return self.cost < other.cost
         # equals function
         def __eq__(self, other):
             return self.x == other.x and self.y == other.y
+        
+        def __hash__(self):
+        # Hash the combination of x and y
+            return hash((self.x, self.y))
+        
+        def __repr__(self):
+            return str(str(self.x) + " "  + str(self.y) +  " "
+                       + str(self.cost) +  " " + str(self.parent_node))
+
     
-    def set_obstacle_map(self):
-        pass
-        obstacle_map = []
-        # instantiate the matrix
-        for i in range(0, self.x_width):
-            obstacle_map[i] = [[False for j in range(0, self.y__width)]]
+    # def set_obstacle_map(self):
+    #     obstacle_map = []
+    #     # instantiate the matrix
+    #     for i in range(0, self.x_width):
+    #         obstacle_map.append([[False for j in range(0, self.y_width)]])
         
+    #     # put true for the box obstacle
         
-        # put true for the box obstacle
+    #     small_y, large_y, small_x, large_x = None, None, None, None
         
-        small_y, large_y, small_x, large_x = None, None, None, None
+    #     for a in self.bounding_boxes.corners: # find the orientation of obstacle
+    #         small_y = min(a.y, small_y) if small_y is not None else a.y
+    #         small_x = min(a.x, small_x) if small_x is not None else a.x
+    #         large_y = min(a.y, large_y) if large_y is not None else a.y
+    #         large_x = min(a.x, large_x) if large_y is not None else a.x
         
-        for a in self.bounding_boxes.corners: # find the orientation of obstacle
-            small_y = min(a.y, small_y) if small_y is not None else a.y
-            small_x = min(a.x, small_x) if small_x is not None else a.x
-            large_y = min(a.y, large_y) if large_y is not None else a.y
-            large_x = min(a.x, large_x) if large_y is not None else a.x
-        
-        if small_y == large_y:
-            for i in range(small_x, large_x + 1):
-                obstacle_map[i][small_y] = True
-                obstacle_map[i+1][small_y] = True # depth of the bounding box
-        else:
-            for i in range(small_y, large_y + 1):
-                obstacle_map[small_x][i] = True
-                obstacle_map[small_x][i+1] = True
+    #     if small_y == large_y:
+    #         for i in range(small_x, large_x + 1):
+    #             obstacle_map[i][small_y] = True
+    #             obstacle_map[i+1][small_y] = True # depth of the bounding box
+    #     else:
+    #         for i in range(small_y, large_y + 1):
+    #             obstacle_map[small_x][i] = True
+    #             obstacle_map[small_x][i+1] = True
                 
-        self.obstacle_map = obstacle_map
+    #     self.obstacle_map = obstacle_map
     
     
-    # transform from frame to coordinate plane
+    # transform from coordinate plane to matrix coordinates
     def calc_grid_position(self, node):
         return (round(node.x + self.x_width/2), round(node.y + self.y_width/2))
     # calc a specific x/y coordiante
@@ -138,18 +144,18 @@ class CustomPlanner(Planner):
     # check bounds 
     def verify_node(self, node):
         px, py = self.calc_grid_position(node)
-        if px < -1 * self.x_width/2:
+        if px < 0:
             return False
-        elif py < -1 * self.y_width/2:
+        elif py < 0:
             return False
-        elif px >= self.x_width/2:
+        elif px >= self.x_width:
             return False
-        elif py >= self.y__width/2:
+        elif py >= self.y_width:
             return False
         
         # check if hits obstacle
-        if self.obstacle_map[node.x][node.y]:
-            return False
+        # if self.obstacle_map[px][py]:
+        #     return False
         
         return True
     
@@ -165,13 +171,15 @@ class CustomPlanner(Planner):
             return Path()
         path = Path()
         path.header.frame_id = 'map'
-        
-        start_x_val = self.calc_xy_index(self.robot_pose.position.x, self.x_width)
-        start_y_val = self.calc_xy_index(self.robot_pose.position.y, self.y_width)
+        # self.set_obstacle_map()
+        # self.node.get_logger().info(str(self.robot_pose.position.x))
+        start_x_val = round(self.robot_pose.position.x)
+        # self.node.get_logger().info(str(start_x_val))
+        start_y_val = round(self.robot_pose.position.y)
         start_node = self.Node(start_x_val, 
                                start_y_val, 0.0, -1)
-        goal_node = self.Node(self.calc_xy_index(self.goal_pose.position.x, self.x_width), 
-                               self.calc_xy_index(self.goal_pose.position.y, self.y_width), 0.0, -1)
+        goal_node = self.Node(round(self.goal_pose.position.x),
+                               round(self.goal_pose.position.y), 0.0, -1)
         
         
         #start = Planner.pose_deep_copy(self.robot_pose)
@@ -183,24 +191,28 @@ class CustomPlanner(Planner):
     
         queue = []
         heapq.heappush(queue, start_node)
-        
-        while True:
+        stopper = 0
+        while stopper <= 5:
+            stopper += 1
+            #self.node.get_logger().info(str(len(queue) == 0))
             if len(queue) == 0:
-                print("Queue is empty")
+                self.node.get_logger().info("empty queue")
                 break
             # pops out of heap
+            self.node.get_logger().info(str(list(queue)))
             current = heapq.heappop(queue)
-            print(self.calc_grid_string(current))
-            visited.add(str(start_x_val) + " " + str(start_y_val))
+            self.node.get_logger().info("queue length " + str(len(queue)))
+            self.node.get_logger().info("position " + self.calc_grid_string(current))
             
-            if current.position.x == self.goal_pose.position.x and current.position.y == self.goal_pose.position.y:
+            visited.add(self.calc_grid_string(current))
+            
+            if current.x == goal_node.x and current.y == goal_node.y:
                 break
             
             node_left = self.Node(current.x - 1, current.y, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
             node_right = self.Node(current.x + 1, current.y, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
             node_forward = self.Node(current.x, current.y + 1, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
             node_back = self.Node(current.x, current.y - 1, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
-            
             
             if not self.verify_node(node_left) or node_left in visited:
                 node_left = None
@@ -211,16 +223,50 @@ class CustomPlanner(Planner):
             if not self.verify_node(node_back) or node_back in visited:
                 node_back = None
                 
-            if self.calc_grid_position(node_left) in path_value:
-                continue
+            # if self.calc_grid_position(node_left) in path_value:
+            #     continue
             
-            if node_left not in queue:
+            # Now checking & updating values in queue
+        
+        
+            if node_left is not None and node_left not in queue:
                 heapq.heappush(queue, node_left)
-            else :
+            elif node_left is not None:
+                # updates the node value
                 for i in range(len(queue)):
                         if node_left.x == queue[i].x and node_left.y == queue[i].y:
                             if queue[i].cost > node_left.cost:
                                 queue[i] = node_left
+                                heapq.heapify(queue)
+            
+            if node_right is not None and node_right not in queue:
+                heapq.heappush(queue, node_right)
+            elif node_right is not None:
+                # updates the node value
+                for i in range(len(queue)):
+                        if node_right.x == queue[i].x and node_right.y == queue[i].y:
+                            if queue[i].cost > node_right.cost:
+                                queue[i] = node_right
+                                heapq.heapify(queue)
+            
+            if node_forward is not None and node_forward not in queue:
+                heapq.heappush(queue, node_forward)
+            elif node_forward is not None:
+                # updates the node value
+                for i in range(len(queue)):
+                        if node_forward.x == queue[i].x and node_forward.y == queue[i].y:
+                            if queue[i].cost > node_forward.cost:
+                                queue[i] = node_forward
+                                heapq.heapify(queue)
+            
+            if node_back is not None and node_back not in queue:
+                heapq.heappush(queue, node_back)
+            elif node_back is not None:
+                # updates the node value
+                for i in range(len(queue)):
+                        if node_back.x == queue[i].x and node_back.y == queue[i].y:
+                            if queue[i].cost > node_back.cost:
+                                queue[i] = node_back
                                 heapq.heapify(queue)
             
                     
