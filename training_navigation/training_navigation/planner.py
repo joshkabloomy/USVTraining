@@ -99,8 +99,8 @@ class CustomPlanner(Planner):
             return hash((self.x, self.y))
         
         def __repr__(self):
-            return str(str(self.x) + " "  + str(self.y) +  " "
-                       + str(self.cost) +  " " + str(self.parent_node))
+            return str(str(self.x) + " "  + str(self.y) +  " ")
+                    #    + str(self.cost) +  " " + str(self.parent_node))
 
     
     # def set_obstacle_map(self):
@@ -113,7 +113,7 @@ class CustomPlanner(Planner):
         
     #     small_y, large_y, small_x, large_x = None, None, None, None
         
-    #     for a in self.bounding_boxes.corners: # find the orientation of obstacle
+    #     for a in self.bounding_boxes: # find the orientation of obstacle
     #         small_y = min(a.y, small_y) if small_y is not None else a.y
     #         small_x = min(a.x, small_x) if small_x is not None else a.x
     #         large_y = min(a.y, large_y) if large_y is not None else a.y
@@ -163,14 +163,25 @@ class CustomPlanner(Planner):
     def calc_heuristic(node1, node2):
         w = 1.0
         return w * math.hypot(node1.x - node2.x, node1.y - node2.y)
-    
+    #backtrack the path
+    def return_path(self, found_node, start_node):
+        path = Path()
+        path.header.frame_id = 'map'
+        temp_node = found_node
+        while self.calc_grid_string(temp_node) != self.calc_grid_string(start_node):
+            curr_pose = Pose()
+            curr_pose.position.x = float(temp_node.x)
+            curr_pose.position.x = float(temp_node.y)
+            path.poses.append(PoseStamped(pose=Planner.pose_deep_copy(curr_pose)))
+            temp_node = temp_node.parent_node
+        
+        
     
     # A* algorithm
     def create_plan(self):
         if self.robot_pose is None or self.goal_pose is None:
             return Path()
-        path = Path()
-        path.header.frame_id = 'map'
+        
         # self.set_obstacle_map()
         # self.node.get_logger().info(str(self.robot_pose.position.x))
         start_x_val = round(self.robot_pose.position.x)
@@ -181,7 +192,7 @@ class CustomPlanner(Planner):
         goal_node = self.Node(round(self.goal_pose.position.x),
                                round(self.goal_pose.position.y), 0.0, -1)
         
-        
+        self.node.get_logger().info("Goal position: " + self.calc_grid_string(goal_node))
         #start = Planner.pose_deep_copy(self.robot_pose)
         path_value = dict()
         path_value[self.calc_grid_string(start_node)] = 0
@@ -192,35 +203,39 @@ class CustomPlanner(Planner):
         queue = []
         heapq.heappush(queue, start_node)
         stopper = 0
-        while stopper <= 5:
+        while True:
             stopper += 1
             #self.node.get_logger().info(str(len(queue) == 0))
             if len(queue) == 0:
                 self.node.get_logger().info("empty queue")
                 break
             # pops out of heap
-            self.node.get_logger().info(str(list(queue)))
+            #self.node.get_logger().info(str(list(queue)))
             current = heapq.heappop(queue)
-            self.node.get_logger().info("queue length " + str(len(queue)))
+            # self.node.get_logger().info("queue length " + str(len(queue)))
             self.node.get_logger().info("position " + self.calc_grid_string(current))
             
             visited.add(self.calc_grid_string(current))
+            self.node.get_logger().info("visited: " + str(visited))
             
             if current.x == goal_node.x and current.y == goal_node.y:
-                break
+                self.node.get_logger().info("Found the goal!!")
+                
+                return self.return_path(current, start_node)
+                
             
             node_left = self.Node(current.x - 1, current.y, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
             node_right = self.Node(current.x + 1, current.y, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
             node_forward = self.Node(current.x, current.y + 1, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
             node_back = self.Node(current.x, current.y - 1, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
             
-            if not self.verify_node(node_left) or node_left in visited:
+            if not self.verify_node(node_left) or self.calc_grid_string(node_left) in visited:
                 node_left = None
-            if not self.verify_node(node_right) or node_right in visited:
+            if not self.verify_node(node_right) or self.calc_grid_string(node_right) in visited:
                 node_right = None
-            if not self.verify_node(node_forward) or node_forward in visited:
+            if not self.verify_node(node_forward) or self.calc_grid_string(node_forward) in visited:
                 node_forward = None
-            if not self.verify_node(node_back) or node_back in visited:
+            if not self.verify_node(node_back) or self.calc_grid_string(node_back) in visited:
                 node_back = None
                 
             # if self.calc_grid_position(node_left) in path_value:
