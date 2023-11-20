@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped, Pose
 from nav_msgs.msg import Odometry, Path
-from training_msgs.msg import BoundingBox
+from training_msgs.msg import BoundingBoxArray
 from .planner import StraightPlanner, CustomPlanner
 
 class TestNavigationNode(Node):
@@ -25,8 +25,9 @@ class TestNavigationNode(Node):
             # Create a subscriber to /perception/lidar/bounding_boxes
             # to get bounding boxes of obstacles
         ###
-        self.obstacle_sub = self.create_subscription(BoundingBox, '/perception/lidar/bounding_boxes',  self.bounding_box_callback, 10)
-        self.bounding_boxes = []
+        self.obstacle_sub = self.create_subscription(BoundingBoxArray, '/perception/lidar/bounding_boxes', 
+                                                     self.bounding_box_callback, 10)
+        self.bounding_boxes = 0
 
 
         self.path_pub = self.create_publisher(Path, '/navigation/plan', 10)
@@ -50,8 +51,8 @@ class TestNavigationNode(Node):
 
         self.create_path()
         
-    def bounding_box_callback(self, msg: BoundingBox) :
-        self.bounding_boxes.append(msg)
+    def bounding_box_callback(self, msg:BoundingBoxArray) :
+        self.bounding_boxes = msg
         self.get_logger().info("Received bounding box: " .format(msg))
         
     

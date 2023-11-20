@@ -78,7 +78,7 @@ class StraightPlanner(Planner):
 # For you to implement!
 class CustomPlanner(Planner):
     def __init__(self):
-        self.x_width, self.y_width = 100, 100
+        self.x_width, self.y_width = 50, 50
         self.obstacle_map = None
     
     class Node:
@@ -103,32 +103,43 @@ class CustomPlanner(Planner):
                     #    + str(self.cost) +  " " + str(self.parent_node))
 
     
-    # def set_obstacle_map(self):
-    #     obstacle_map = []
-    #     # instantiate the matrix
-    #     for i in range(0, self.x_width):
-    #         obstacle_map.append([[False for j in range(0, self.y_width)]])
+    def set_obstacle_map(self):
+        obstacle_map = []
+        # instantiate the matrix
         
-    #     # put true for the box obstacle
+        obstacle_map = [[False]*self.y_width]*self.x_width
         
-    #     small_y, large_y, small_x, large_x = None, None, None, None
+        # put true for the box obstacle
         
-    #     for a in self.bounding_boxes: # find the orientation of obstacle
-    #         small_y = min(a.y, small_y) if small_y is not None else a.y
-    #         small_x = min(a.x, small_x) if small_x is not None else a.x
-    #         large_y = min(a.y, large_y) if large_y is not None else a.y
-    #         large_x = min(a.x, large_x) if large_y is not None else a.x
-        
-    #     if small_y == large_y:
-    #         for i in range(small_x, large_x + 1):
-    #             obstacle_map[i][small_y] = True
-    #             obstacle_map[i+1][small_y] = True # depth of the bounding box
-    #     else:
-    #         for i in range(small_y, large_y + 1):
-    #             obstacle_map[small_x][i] = True
-    #             obstacle_map[small_x][i+1] = True
+        # self.node.get_logger().info(str(self.bounding_boxes))
+        for a in self.bounding_boxes.boxes: # find the orientation of obstacle
+            small_y, large_y, small_x, large_x = 0, 0, 0, 0
+            for b in a.corners:
+                # self.node.get_logger().info("corners  " + str(b))
+                small_y = round(min(self.calc_xy_index(b.y, self.y_width), small_y) )
+                small_x = round(min(self.calc_xy_index(b.x, self.x_width), small_x) )
+                large_y = round(max(self.calc_xy_index(b.y, self.y_width), large_y) )
+                large_x = round(max(self.calc_xy_index(b.x, self.x_width), large_x))
+            # self.node.get_logger().info("BREAK ---- ")
+            
+            # update the matrix
+            if small_y == large_y:
+                for i in range(small_x, large_x + 1):
+                    obstacle_map[i][small_y] = True
+                    if (small_y + 1 < self.y_width):
+                        obstacle_map[i][small_y + 1] = True # depth of the bounding box
+            elif small_x == large_x:
+                for i in range(small_y, large_y + 1):
+                    obstacle_map[small_x][i] = True
+                    if (small_x + 1 < self.x_width):
+                        obstacle_map[small_x + 1][i] = True
+            else :
+                self.node.get_logger().info("Obstacle updating error")
                 
-    #     self.obstacle_map = obstacle_map
+        
+        # for i in range(0, self.x_width):
+        #     self.node.get_logger().info(str(obstacle_map[i]))
+        self.obstacle_map = obstacle_map
     
     
     # transform from coordinate plane to matrix coordinates
@@ -144,6 +155,8 @@ class CustomPlanner(Planner):
     # check bounds 
     def verify_node(self, node):
         px, py = self.calc_grid_position(node)
+        #self.node.get_logger().info("Check bounds" + str(px) + " " + str(py))
+        #self.node.get_logger().info("Size of Matrix" + str(len(self.obstacle_map)) + " " + str(len(self.obstacle_map[0])))
         if px < 0:
             return False
         elif py < 0:
@@ -152,10 +165,10 @@ class CustomPlanner(Planner):
             return False
         elif py >= self.y_width:
             return False
-        
+        #self.node.get_logger().info(str(self.obstacle_map[px][py]))
         # check if hits obstacle
-        # if self.obstacle_map[px][py]:
-        #     return False
+        if self.obstacle_map[px][py]:
+            return False
         
         return True
     
@@ -164,16 +177,23 @@ class CustomPlanner(Planner):
         w = 1.0
         return w * math.hypot(node1.x - node2.x, node1.y - node2.y)
     #backtrack the path
-    def return_path(self, found_node, start_node):
-        path = Path()
-        path.header.frame_id = 'map'
+    def return_path(self, found_node, start_node, path):
+        
+        curr_pose = Pose()
         temp_node = found_node
         while self.calc_grid_string(temp_node) != self.calc_grid_string(start_node):
             curr_pose = Pose()
             curr_pose.position.x = float(temp_node.x)
-            curr_pose.position.x = float(temp_node.y)
+            curr_pose.position.y = float(temp_node.y)
             path.poses.append(PoseStamped(pose=Planner.pose_deep_copy(curr_pose)))
+            self.node.get_logger().info(self.calc_grid_string(temp_node))
             temp_node = temp_node.parent_node
+            
+        curr_pose = Pose()
+        curr_pose.position.x = float(temp_node.x)
+        curr_pose.position.y = float(temp_node.y)
+        path.poses.append(PoseStamped(pose=Planner.pose_deep_copy(curr_pose)))
+        return path
         
         
     
@@ -181,8 +201,10 @@ class CustomPlanner(Planner):
     def create_plan(self):
         if self.robot_pose is None or self.goal_pose is None:
             return Path()
+        path = Path()
+        path.header.frame_id = 'map'
         
-        # self.set_obstacle_map()
+        self.set_obstacle_map()
         # self.node.get_logger().info(str(self.robot_pose.position.x))
         start_x_val = round(self.robot_pose.position.x)
         # self.node.get_logger().info(str(start_x_val))
@@ -202,9 +224,9 @@ class CustomPlanner(Planner):
     
         queue = []
         heapq.heappush(queue, start_node)
-        stopper = 0
+        counter = 0
         while True:
-            stopper += 1
+            counter += 1
             #self.node.get_logger().info(str(len(queue) == 0))
             if len(queue) == 0:
                 self.node.get_logger().info("empty queue")
@@ -216,12 +238,13 @@ class CustomPlanner(Planner):
             self.node.get_logger().info("position " + self.calc_grid_string(current))
             
             visited.add(self.calc_grid_string(current))
-            self.node.get_logger().info("visited: " + str(visited))
+            #self.node.get_logger().info("visited: " + str(visited))
             
             if current.x == goal_node.x and current.y == goal_node.y:
                 self.node.get_logger().info("Found the goal!!")
-                
-                return self.return_path(current, start_node)
+                self.node.get_logger().info("Nodes Visited: " + str(counter))
+                self.return_path(current, start_node, path)
+                return path
                 
             
             node_left = self.Node(current.x - 1, current.y, current.cost + 1 + self.calc_heuristic(current, goal_node), current)
