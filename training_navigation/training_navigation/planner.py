@@ -2,6 +2,7 @@ from geometry_msgs.msg import Pose, PoseStamped
 from nav_msgs.msg import Path
 import math
 import heapq
+import sys 
 
 ###
 
@@ -78,7 +79,7 @@ class StraightPlanner(Planner):
 # For you to implement!
 class CustomPlanner(Planner):
     def __init__(self):
-        self.x_width, self.y_width = 50, 50
+        self.x_width, self.y_width = 100,100
         self.obstacle_map = None
     
     class Node:
@@ -113,7 +114,10 @@ class CustomPlanner(Planner):
         
         # self.node.get_logger().info(str(self.bounding_boxes))
         for a in self.bounding_boxes.boxes: # find the orientation of obstacle
-            small_y, large_y, small_x, large_x = 0, 0, 0, 0
+            small_y, small_x = 100000,100000
+            large_y, large_x = -100000,-100000
+            
+            #self.node.get_logger().info(str(small_x) + " " + str(large_x) + " "+ str(small_y) + " " + str(large_y) + " ")
             for b in a.corners:
                 # self.node.get_logger().info("corners  " + str(b))
                 small_y = round(min(self.calc_xy_index(b.y, self.y_width), small_y) )
@@ -121,20 +125,38 @@ class CustomPlanner(Planner):
                 large_y = round(max(self.calc_xy_index(b.y, self.y_width), large_y) )
                 large_x = round(max(self.calc_xy_index(b.x, self.x_width), large_x))
             # self.node.get_logger().info("BREAK ---- ")
-            
+            exceed_size = False
+            if (large_y >= self.y_width or large_x >= self.x_width or small_x<0 or small_y<0):
+                exceed_size = True
+            self.node.get_logger().info(str(small_x) + " " + str(large_x) + " "+ str(small_y) + " " + str(large_y) + " ")
+                
             # update the matrix
-            if small_y == large_y:
+            if not exceed_size and small_y == large_y:
                 for i in range(small_x, large_x + 1):
                     obstacle_map[i][small_y] = True
                     if (small_y + 1 < self.y_width):
                         obstacle_map[i][small_y + 1] = True # depth of the bounding box
-            elif small_x == large_x:
+                if (small_x - 1 >= 0) :
+                    obstacle_map[small_x - 1][small_y] = True
+                    #self.node.get_logger().info("small_x " + str(small_x - 1) )
+                if (large_x + 1 < self.x_width):
+                    obstacle_map[large_x + 1][small_y] = True
+            
+            elif not exceed_size and small_x == large_x:
                 for i in range(small_y, large_y + 1):
+                    #self.node.get_logger().info("small_x" + str(small_x) )
                     obstacle_map[small_x][i] = True
                     if (small_x + 1 < self.x_width):
                         obstacle_map[small_x + 1][i] = True
+                if (small_y - 1 >= 0) :
+                    obstacle_map[small_x][small_y - 1] = True
+                if (small_y + 1 < self.y_width):
+                    obstacle_map[small_x][large_y + 1] = True
+            
             else :
-                self.node.get_logger().info("Obstacle updating error")
+                self.node.get_logger().info("Obstacle updating error: Too big")
+                #self.node.get_logger().info(str(a.corners))
+                #self.node.get_logger().info("obstacle: " + str(small_x) + " " + str(large_x) + " "+ str(small_y) + " " + str(large_y) + " ")
                 
         
         # for i in range(0, self.x_width):
@@ -168,6 +190,7 @@ class CustomPlanner(Planner):
         #self.node.get_logger().info(str(self.obstacle_map[px][py]))
         # check if hits obstacle
         if self.obstacle_map[px][py]:
+            self.node.get_logger().info("checker: " + str(px) + " " + str(py))
             return False
         
         return True
@@ -215,6 +238,9 @@ class CustomPlanner(Planner):
                                round(self.goal_pose.position.y), 0.0, -1)
         
         self.node.get_logger().info("Goal position: " + self.calc_grid_string(goal_node))
+        if not self.verify_node(goal_node):
+            self.node.get_logger().info("Cannot find path to obstacle!")
+            return Path()
         #start = Planner.pose_deep_copy(self.robot_pose)
         path_value = dict()
         path_value[self.calc_grid_string(start_node)] = 0
