@@ -79,7 +79,7 @@ class StraightPlanner(Planner):
 # For you to implement!
 class CustomPlanner(Planner):
     def __init__(self):
-        self.x_width, self.y_width = 100,100
+        self.x_width, self.y_width = 50,50
         self.obstacle_map = None
     
     class Node:
@@ -108,7 +108,7 @@ class CustomPlanner(Planner):
         obstacle_map = []
         # instantiate the matrix
         
-        obstacle_map = [[False]*self.y_width]*self.x_width
+        obstacle_map = [[False for x in range(self.x_width)] for y in range(self.y_width)]
         
         # put true for the box obstacle
         
@@ -132,8 +132,11 @@ class CustomPlanner(Planner):
                 
             # update the matrix
             if not exceed_size and small_y == large_y:
+                self.node.get_logger().info("small_X: " + str(small_x) )
+                self.node.get_logger().info("large_x: " + str(large_x) )
                 for i in range(small_x, large_x + 1):
                     obstacle_map[i][small_y] = True
+                    self.node.get_logger().info("visited_x_of y: " + str(obstacle_map[24][25]) )
                     if (small_y + 1 < self.y_width):
                         obstacle_map[i][small_y + 1] = True # depth of the bounding box
                 if (small_x - 1 >= 0) :
@@ -143,9 +146,12 @@ class CustomPlanner(Planner):
                     obstacle_map[large_x + 1][small_y] = True
             
             elif not exceed_size and small_x == large_x:
+                self.node.get_logger().info("small_y: " + str(small_y) )
+                self.node.get_logger().info("large_y: " + str(large_y) )
                 for i in range(small_y, large_y + 1):
-                    #self.node.get_logger().info("small_x" + str(small_x) )
                     obstacle_map[small_x][i] = True
+                    self.node.get_logger().info("visited_x_of y: " + str(obstacle_map[24][25]))
+                    self.node.get_logger().info("visited_x_of y: " + str(small_x)  + " " + str(i))
                     if (small_x + 1 < self.x_width):
                         obstacle_map[small_x + 1][i] = True
                 if (small_y - 1 >= 0) :
@@ -189,7 +195,7 @@ class CustomPlanner(Planner):
             return False
         #self.node.get_logger().info(str(self.obstacle_map[px][py]))
         # check if hits obstacle
-        if self.obstacle_map[px][py]:
+        if self.obstacle_map[px][py] == True:
             self.node.get_logger().info("checker: " + str(px) + " " + str(py))
             return False
         
