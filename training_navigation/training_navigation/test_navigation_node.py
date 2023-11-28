@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped, Pose
 from nav_msgs.msg import Odometry, Path
-from training_msgs.msg import BoundingBoxArray
+from virtuoso_msg.msg import BoundingBoxArray
 from .planner import StraightPlanner, CustomPlanner
 
 class TestNavigationNode(Node):

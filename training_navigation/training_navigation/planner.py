@@ -222,6 +222,7 @@ class CustomPlanner(Planner):
         curr_pose.position.x = float(temp_node.x)
         curr_pose.position.y = float(temp_node.y)
         path.poses.append(PoseStamped(pose=Planner.pose_deep_copy(curr_pose)))
+        path.poses.reverse()
         return path
         
         
