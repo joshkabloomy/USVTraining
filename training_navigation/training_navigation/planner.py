@@ -108,7 +108,7 @@ class CustomPlanner(Planner):
         obstacle_map = []
         # instantiate the matrix
         
-        obstacle_map = [[False for x in range(self.x_width)] for y in range(self.y_width)]
+        obstacle_map = [[False for a in range(self.y_width)] for b in range(self.x_width)]
         
         # put true for the box obstacle
         
